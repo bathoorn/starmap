@@ -45,12 +45,11 @@ with load.open(hipparcos.URL) as f:
 with open('data/catalog.txt') as f:
     dsodata = dsos.load_dataframe(f)
 
-with open('data/lines_18.txt') as fc:
+with open('data/lines_in_18.txt') as fc:
     constdata = constellation_bounds.load_dataframe(fc)
 
 with open('data/centers_18.txt') as fc:
     centersdata = constellation_centers.load_dataframe(fc)
-
 
 # And the constellation outlines come from Stellarium.  We make a list
 # of the stars at which each edge stars, and the star at which each edge
@@ -67,6 +66,8 @@ url2 = ('https://raw.githubusercontent.com/Stellarium/stellarium/master'
 
 with load.open(url2) as f2:
     star_names = stellarium.parse_star_names(f2)
+    starnames = {hip: name for hip, name in star_names}
+
 
 
 def generate_constellation_lines(data, polygon=False):
@@ -90,11 +91,16 @@ def generate_constellation_borders(data):
     xy1 = pd.DataFrame(columns=['x', 'y'])
     xy2 = pd.DataFrame(columns=['x', 'y'])
     for segm, line in data:
+        p1 = []
+        p2 = []
         for i, point in enumerate(line.iterrows()):
             if i == 0:
-                xy1.loc[len(xy1)] = [point[1]['x'],point[1]['y']]
-            if i == 1:
-                xy2.loc[len(xy2)] = [point[1]['x'],point[1]['y']]
+                p1 = [point[1]['x'], point[1]['y']]
+            else:
+                p2 = [point[1]['x'], point[1]['y']]
+                xy1.loc[len(xy2)] = p1
+                xy2.loc[len(xy2)] = p2
+                p1 = p2
 
     return np.rollaxis(np.array([xy1, xy2]), 1)
 
@@ -180,6 +186,14 @@ angle = np.pi - field_of_view_degrees / 360.0 * np.pi
 limit = np.sin(angle) / (1.0 - np.cos(angle))
 
 
+print(f"starnames = {starnames}")
+for i, s in stardata[bright_stars].iterrows():
+    if -limit < s['x'] < limit and -limit < s['y'] < limit:
+        if i in starnames:
+            print(f"star {starnames[i]} mag {s['magnitude']}")
+            ax.text(s['x'] + 0.004, s['y'] - 0.004, starnames[i], color='k',
+                    ha='left', va='top', fontsize=6, weight='bold', zorder=1).set_alpha(0.5)
+
 for i, d in dsodata[bright_dsos].iterrows():
     if -limit < d['x'] < limit and -limit < d['y'] < limit:
         # print(f"dso {d['label']} mag {d['magnitude']}")
@@ -190,7 +204,7 @@ for i, c in centersdata.iterrows():
     if -limit < c['x'] < limit and -limit < c['y'] < limit:
         print(f"constallation {i} x {c['x']} y {c['y']}")
         ax.text(c['x'], c['y'], i, color='red',
-                ha='left', va='top', fontsize=16, weight='bold', zorder=1).set_alpha(0.5)
+                ha='left', va='top', fontsize=24, weight='bold', zorder=1).set_alpha(0.35)
 
 ax.set_xlim(-limit, limit)
 ax.set_ylim(-limit, limit)
