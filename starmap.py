@@ -143,7 +143,7 @@ dso_size = (0.9 + dso_limit_magnitude - dso_magnitude) ** 2.0
 
 # Time to build the figure!
 
-fig, ax = plt.subplots(figsize=[24, 24])
+fig, ax = plt.subplots(figsize=[24, 24], facecolor='#041A40')
 
 # Draw Horizon as dashed line
 # 24 points horizon
@@ -163,19 +163,19 @@ ax.add_collection(LineCollection(horizon,
 # Draw the constellation lines.
 
 constellations = LineCollection(generate_constellation_lines(consdata),
-                                colors='#00f2', linewidths=1, zorder=-1, alpha=0.5)
+                                colors='grey', linewidths=1, zorder=-1, alpha=0.5)
 ax.add_collection(constellations)
 
 # Draw constellation borders.
 borders = LineCollection(generate_constellation_borders(constsegments),
-                                colors='#00f2', linewidths=1, zorder=-1, alpha=0.5, linestyles='dashed')
+                                colors='grey', linewidths=1, zorder=-1, alpha=0.5, linestyles='dashed')
 ax.add_collection(borders)
 
 
 # Draw the stars.
 
 ax.scatter(stardata['x'][bright_stars], stardata['y'][bright_stars],
-           s=marker_size, color='k')
+           s=marker_size, color='white')
 
 ax.scatter(dsodata['x'][bright_dsos], dsodata['y'][bright_dsos],
            s=dso_size, color='red')
@@ -191,7 +191,7 @@ for i, s in stardata[bright_stars].iterrows():
     if -limit < s['x'] < limit and -limit < s['y'] < limit:
         if i in starnames:
             print(f"star {starnames[i]} mag {s['magnitude']}")
-            ax.text(s['x'] + 0.004, s['y'] - 0.004, starnames[i], color='k',
+            ax.text(s['x'] + 0.004, s['y'] - 0.004, starnames[i], color='white',
                     ha='left', va='top', fontsize=6, weight='bold', zorder=1).set_alpha(0.5)
 
 for i, d in dsodata[bright_dsos].iterrows():
@@ -203,7 +203,7 @@ for i, d in dsodata[bright_dsos].iterrows():
 for i, c in centersdata.iterrows():
     if -limit < c['x'] < limit and -limit < c['y'] < limit:
         print(f"constallation {i} x {c['x']} y {c['y']}")
-        ax.text(c['x'], c['y'], i, color='red',
+        ax.text(c['x'], c['y'], i, color='white',
                 ha='left', va='top', fontsize=24, weight='bold', zorder=1).set_alpha(0.35)
 
 ax.set_xlim(-limit, limit)
@@ -215,4 +215,4 @@ ax.set_title(f"To the South in Amsterdam on {t.utc_strftime('%Y %B %d %H:%M')}")
 
 # Save.
 
-fig.savefig('summer-triangle.png', bbox_inches='tight')
+fig.savefig('summer-triangle.png', bbox_inches='tight', transparent=True)
