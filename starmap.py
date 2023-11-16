@@ -29,11 +29,18 @@ position = amsterdam.from_altaz(alt_degrees=90, az_degrees=degrees)
 eph = load('de421.bsp')
 sun = eph['sun']
 earth = eph['earth']
-
-# Center on Albireo middle of Summer Triangle
-
-albireo = Star(ra_hours=(19, 30, 45.40),
-               dec_degrees=(27, 57, 55.0))
+planet_names = {
+    'mercury': 199,
+    'venus': 299,
+    'mars': 499,
+    'jupiter': 5,
+    'saturn': 6,
+    'uranus': 7,
+    'neptune': 8,
+    'pluto': 9,
+    'moon': 301
+}
+planets = {name: eph[id] for name, id in planet_names.items()}
 
 # The Hipparcos mission provides our star catalog.
 
@@ -106,8 +113,6 @@ def generate_constellation_borders(data):
 
 # We will center the chart on the comet's middle position.
 
-center = earth.at(t).observe(albireo)
-#projection = build_stereographic_projection(center)
 projection = build_stereographic_projection(position)
 field_of_view_degrees = 180.0
 limiting_magnitude = 6.0
@@ -115,6 +120,11 @@ dso_limit_magnitude = 8.0
 
 # Now that we have constructed our projection, compute the x and y
 # coordinates that each star will have on the plot.
+
+planetdata = pd.DataFrame(columns=['x', 'y', 'name'])
+for name, obj in planets.items():
+    x, y = projection(earth.at(t).observe(obj))
+    planetdata.loc[len(planetdata)] = [x, y, name]
 
 star_positions = earth.at(t).observe(Star.from_dataframe(stardata))
 stardata['x'], stardata['y'] = projection(star_positions)
@@ -168,14 +178,20 @@ ax.add_collection(constellations)
 
 # Draw constellation borders.
 borders = LineCollection(generate_constellation_borders(constsegments),
-                                colors='grey', linewidths=1, zorder=-1, alpha=0.5, linestyles='dashed')
+                                colors='#00f2', linewidths=1, zorder=-1, alpha=0.5, linestyles='dashed')
 ax.add_collection(borders)
 
 
 # Draw the stars.
 
 ax.scatter(stardata['x'][bright_stars], stardata['y'][bright_stars],
-           s=marker_size, color='white')
+           s=marker_size+5, color='black')
+
+ax.scatter(stardata['x'][bright_stars], stardata['y'][bright_stars],
+           s=marker_size, color='white', alpha=0.75)
+
+ax.scatter(planetdata['x'], planetdata['y'],
+           s=25, color='green', alpha=0.65)
 
 ax.scatter(dsodata['x'][bright_dsos], dsodata['y'][bright_dsos],
            s=dso_size, color='red')
@@ -186,33 +202,46 @@ angle = np.pi - field_of_view_degrees / 360.0 * np.pi
 limit = np.sin(angle) / (1.0 - np.cos(angle))
 
 
-print(f"starnames = {starnames}")
 for i, s in stardata[bright_stars].iterrows():
     if -limit < s['x'] < limit and -limit < s['y'] < limit:
         if i in starnames:
             print(f"star {starnames[i]} mag {s['magnitude']}")
             ax.text(s['x'] + 0.004, s['y'] - 0.004, starnames[i], color='white',
-                    ha='left', va='top', fontsize=6, weight='bold', zorder=1).set_alpha(0.5)
+                    ha='left', va='top', fontsize=5, weight='bold', zorder=1).set_alpha(0.5)
+
+for i, p in planetdata.iterrows():
+    if -limit < p['x'] < limit and -limit < p['y'] < limit:
+        ax.text(p['x'] + 0.004, p['y'] - 0.004, p['name'], color='green',
+                ha='left', va='top', fontsize=10, weight='bold', zorder=1).set_alpha(0.5)
 
 for i, d in dsodata[bright_dsos].iterrows():
     if -limit < d['x'] < limit and -limit < d['y'] < limit:
         # print(f"dso {d['label']} mag {d['magnitude']}")
         ax.text(d['x'] + 0.004, d['y'] - 0.004, d['label'], color='red',
-                ha='left', va='top', fontsize=9, weight='bold', zorder=1).set_alpha(0.5)
+                ha='left', va='top', fontsize=8, weight='bold', zorder=1).set_alpha(0.5)
 
 for i, c in centersdata.iterrows():
     if -limit < c['x'] < limit and -limit < c['y'] < limit:
         print(f"constallation {i} x {c['x']} y {c['y']}")
         ax.text(c['x'], c['y'], i, color='white',
-                ha='left', va='top', fontsize=24, weight='bold', zorder=1).set_alpha(0.35)
+                ha='center', va='center', fontsize=35, weight='bold', zorder=1).set_alpha(0.20)
 
 ax.set_xlim(-limit, limit)
 ax.set_ylim(-limit, limit)
 ax.xaxis.set_visible(True)
 ax.yaxis.set_visible(True)
 ax.set_aspect(1.0)
-ax.set_title(f"To the South in Amsterdam on {t.utc_strftime('%Y %B %d %H:%M')}")
+
+font = {
+    'fontsize': 'large',
+    'fontweight': 'normal',
+    'color': 'white',
+    'verticalalignment': 'baseline',
+    'horizontalalignment': 'center'
+}
+
+ax.set_title(f"To the South in Amsterdam on {t.utc_strftime('%Y %B %d %H:%M')}", fontdict=font)
 
 # Save.
 
-fig.savefig('summer-triangle.png', bbox_inches='tight', transparent=True)
+fig.savefig('summer-triangle.png', bbox_inches='tight', transparent=True, facecolor='#041A40')
