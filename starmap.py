@@ -3,6 +3,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection, PolyCollection
 
+
 from skyfield.api import Star, load, wgs84, N, S, W, E
 from skyfield.data import hipparcos, mpc, stellarium
 import dsos
@@ -16,7 +17,7 @@ from pytz import timezone
 
 AMS = timezone('Europe/Amsterdam')
 ts = load.timescale()
-t = ts.from_datetime(AMS.localize(datetime(2023, 11, 15, 22, 0, 0)))
+t = ts.from_datetime(AMS.localize(datetime(1976, 10, 17, 5, 25, 0)))
 # 180 = South 0 = North
 degrees = 0.0
 
@@ -153,22 +154,28 @@ dso_size = (0.9 + dso_limit_magnitude - dso_magnitude) ** 2.0
 
 # Time to build the figure!
 
-fig, ax = plt.subplots(figsize=[24, 24], facecolor='#041A40')
+fig, ax = plt.subplots(figsize=[24, 24])
 
 # Draw Horizon as dashed line
 # 24 points horizon
 
-horizon = []
-h0 = projection(amsterdam.from_altaz(alt_degrees=0, az_degrees=0.0))
-for i in range(1, 73):
-    delta = 5.0
-    current = i * delta
-    h1 = projection(amsterdam.from_altaz(alt_degrees=0, az_degrees=current))
-    horizon.append([h0, h1])
-    h0 = h1
+border = plt.Circle((0, 0), 1, color='navy', zorder=-2, fill=True)
+ax.add_patch(border)
 
-ax.add_collection(LineCollection(horizon,
-                         colors='#00f2', linewidths=1, linestyle='dashed', zorder=-1, alpha=0.5))
+# The horizon the hard way
+# you can just draw a circle
+# horizon = plt.Circle((0, 0), radius=1, transform=ax.transData)
+#horizon = []
+#h0 = projection(amsterdam.from_altaz(alt_degrees=0, az_degrees=0.0))
+#for i in range(1, 73):
+#    delta = 5.0
+#    current = i * delta
+#    h1 = projection(amsterdam.from_altaz(alt_degrees=0, az_degrees=current))
+#    horizon.append([h0, h1])
+#    h0 = h1
+#
+#ax.add_collection(LineCollection(horizon,
+#                         colors='#00f2', linewidths=1, linestyle='dashed', zorder=-1, alpha=0.5))
 
 # Draw the constellation lines.
 
@@ -178,7 +185,7 @@ ax.add_collection(constellations)
 
 # Draw constellation borders.
 borders = LineCollection(generate_constellation_borders(constsegments),
-                                colors='#00f2', linewidths=1, zorder=-1, alpha=0.5, linestyles='dashed')
+                                colors='black', linewidths=1, zorder=-1, alpha=0.5, linestyles='dashed')
 ax.add_collection(borders)
 
 
@@ -235,13 +242,21 @@ ax.set_aspect(1.0)
 font = {
     'fontsize': 'large',
     'fontweight': 'normal',
-    'color': 'white',
+    'color': 'black',
     'verticalalignment': 'baseline',
     'horizontalalignment': 'center'
 }
 
-ax.set_title(f"To the South in Amsterdam on {t.utc_strftime('%Y %B %d %H:%M')}", fontdict=font)
+ax.set_title(f"To the South in Amsterdam on {t.utc_strftime('%Y %B %d %H:%M')} UTC", fontdict=font)
 
+# clip at the horizon
+horizon = plt.Circle((0, 0), radius=1, transform=ax.transData)
+for col in ax.collections:
+    col.set_clip_path(horizon)
 # Save.
 
-fig.savefig('summer-triangle.png', bbox_inches='tight', transparent=True, facecolor='#041A40')
+plt.axis('off')
+#plt.show()
+
+fig.savefig('summer-triangle.png', bbox_inches='tight')
+#            , transparent=True, facecolor='#041A40')
