@@ -229,7 +229,6 @@ for i, d in dsodata[bright_dsos].iterrows():
 
 for i, c in centersdata.iterrows():
     if -limit < c['x'] < limit and -limit < c['y'] < limit:
-        print(f"constallation {i} x {c['x']} y {c['y']}")
         ax.text(c['x'], c['y'], i, color='white',
                 ha='center', va='center', fontsize=35, weight='bold', zorder=1).set_alpha(0.20)
 
@@ -258,5 +257,5 @@ for col in ax.collections:
 plt.axis('off')
 #plt.show()
 
-fig.savefig('summer-triangle.png', bbox_inches='tight')
+fig.savefig('starmap.png', bbox_inches='tight')
 #            , transparent=True, facecolor='#041A40')
